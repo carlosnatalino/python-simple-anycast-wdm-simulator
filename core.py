@@ -122,7 +122,7 @@ class Environment:
         if output_folder is not None:
             self.output_folder = output_folder
         elif args is not None and hasattr(args, "output_folder"):
-            self.output_folder = args.ourput_folder
+            self.output_folder = args.output_folder
         else:
             self.output_folder = 'data'
 
