@@ -1,6 +1,8 @@
 import abc
 import numpy as np
-import logging
+from core import Service
+from graph import Path
+from networkx import Graph
 
 
 class RoutingPolicy(abc.ABC):
@@ -10,7 +12,7 @@ class RoutingPolicy(abc.ABC):
         self.name = None
 
     @abc.abstractmethod
-    def route(self, service):
+    def route(self, service: Service) -> (bool, str, Path):
         pass
 
 
@@ -20,7 +22,7 @@ class ClosestAvailableDC(RoutingPolicy):
         super().__init__()
         self.name = 'CADC'
 
-    def route(self, service):
+    def route(self, service: Service) -> (bool, str, Path):
         """
         Finds the closest DC with enough available CPUs and with a path with enough available network resources
         """
@@ -46,7 +48,7 @@ class FarthestAvailableDC(RoutingPolicy):
         super().__init__()
         self.name = 'FADC'
 
-    def route(self, service):
+    def route(self, service: Service) -> (bool, str, Path):
         """
         Finds the farthest DC with enough available CPUs and with a path with enough available network resources
         """
@@ -72,7 +74,7 @@ class FullLoadBalancing(RoutingPolicy):
         super().__init__()
         self.name = 'FLB'
 
-    def route(self, service):
+    def route(self, service: Service) -> (bool, str, Path):
         """
         Finds the path+DC pair with lowest combined load
         """
@@ -95,14 +97,14 @@ class FullLoadBalancing(RoutingPolicy):
         return found, closest_dc, closest_path  # returns false and an index out of bounds if no path is available
 
 
-def is_path_free(topology, path, number_units):
+def is_path_free(topology: Graph, path: Path, number_units: int) -> bool:
     for i in range(len(path.node_list) - 1):
         if topology[path.node_list[i]][path.node_list[i + 1]]['available_units'] < number_units:
             return False
     return True
 
 
-def get_max_usage(topology, path):
+def get_max_usage(topology: Graph, path: Path) -> int:
     """
     Obtains the maximum usage of resources among all the links forming the path
     """

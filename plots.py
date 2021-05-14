@@ -45,7 +45,7 @@ def plot_simulation_progress(env):
     plt.close()
 
 
-def plot_final_results(env, results, start_time, savefile=True, show=False, timedelta=None):
+def plot_final_results(env, results, start_time, save_file=True, show=False, timedelta=None):
     """
     Consolidates the statistics and plots it periodically and at the end of all simulations.
     """
@@ -105,7 +105,7 @@ def plot_final_results(env, results, start_time, savefile=True, show=False, time
                                                         transform=plt.gcf().transFigure,
                                                         fontsize=rcParams['font.size'] - 4.)
 
-    if savefile:
+    if save_file:
         for format in env.plot_formats:
             plt.savefig('./results/{}/final_results.{}'.format(env.output_folder, format))
     if show:

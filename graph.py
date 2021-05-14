@@ -5,14 +5,13 @@ from xml.dom.minidom import parse
 import xml.dom.minidom
 import networkx as nx
 import numpy as np
-import logging
 
 
-def get_k_shortest_paths(G, source, target, k, weight=None):
+def get_k_shortest_paths(graph, source, target, k, weight=None):
     """
     Method from https://networkx.github.io/documentation/stable/reference/algorithms/generated/networkx.algorithms.simple_paths.shortest_simple_paths.html#networkx.algorithms.simple_paths.shortest_simple_paths
     """
-    return list(islice(nx.shortest_simple_paths(G, source, target, weight=weight), k))
+    return list(islice(nx.shortest_simple_paths(graph, source, target, weight=weight), k))
 
 
 def get_path_weight(graph, path, weight='length'):
@@ -117,7 +116,7 @@ def get_ksp(args, topology):
             objs = []
             for path, length in zip(paths, lengths):
                 objs.append(Path(path, length))
-            # both directions have the same paths, i.e., bidirectional symetrical links
+            # both directions have the same paths, i.e., bidirectional symmetrical links
             k_shortest_paths[n1, n2] = objs
             k_shortest_paths[n2, n1] = objs
     topology.graph['ksp'] = k_shortest_paths

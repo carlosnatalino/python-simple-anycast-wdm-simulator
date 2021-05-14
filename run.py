@@ -1,6 +1,3 @@
-import logging
-logging.basicConfig(format='%(asctime)s\t%(name)-12s\t%(threadName)s\t%(message)s', level=logging.DEBUG)
-
 import argparse
 import copy
 import pickle
@@ -18,6 +15,9 @@ import core
 import graph
 import plots
 import policies
+
+import logging
+logging.basicConfig(format='%(asctime)s\t%(name)-12s\t%(threadName)s\t%(message)s', level=logging.DEBUG)
 
 
 def run(uargs):

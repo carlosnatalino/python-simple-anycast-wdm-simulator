@@ -17,13 +17,13 @@ class Environment:
         if args is not None and hasattr(args, 'mean_service_holding_time'):
             self.mean_service_holding_time = args.mean_service_holding_time
         else:
-            self.mean_service_holding_time = 86400.0 # service holding time in seconds (54000 sec = 15 h)
+            self.mean_service_holding_time = 86400.0  # service holding time in seconds (54000 sec = 15 h)
 
         self.load = 0.0
         self.mean_service_inter_arrival_time = 0.0
         if args is not None and hasattr(args, 'load') and load is None:
             self.set_load(load=args.load)
-        elif load is not None: # load through parameter has precedence over argument
+        elif load is not None:  # load through parameter has precedence over argument
             self.set_load(load=load)
         else:
             self.set_load(load=50)
@@ -70,7 +70,7 @@ class Environment:
             self.topology_file = args.topology_file
             self.topology_name = args.topology_file.split('.')[0]
         else:
-            self.topology_file = "nobel-us.xml"#"nobel-us.xml" #"test-topo.xml"
+            self.topology_file = "nobel-us.xml"  #"nobel-us.xml" #"test-topo.xml"
             self.topology_name = 'nobel-us'
             # self.topology_file = "simple"  # "nobel-us.xml" #"test-topo.xml"
             # self.topology_name = 'simple'
@@ -81,10 +81,10 @@ class Environment:
             self.resource_units_per_link = 80
 
         if policy is not None:
-            self.policy = policy # parameter has precedence over argument
+            self.policy = policy  # parameter has precedence over argument
             self.policy.env = self
         else:
-            self.policy = policies.ClosestAvailableDC() # closest DC by default
+            self.policy = policies.ClosestAvailableDC()  # closest DC by default
             self.policy.env = self
 
         if topology is not None:
@@ -100,15 +100,15 @@ class Environment:
         if results is not None:
             self.results = results
         else:
-            self.results = [] # initiates with an empty local results vector
+            self.results = []  # initiates with an empty local results vector
 
         if id_simulation is not None:
             self.id_simulation = id_simulation
         else:
             self.id_simulation = 0
 
-        self.track_stats_every = 100 # frequency at which results are saved
-        self.plot_tracked_stats_every = 1000 # frequency at which results are plotted
+        self.track_stats_every = 100  # frequency at which results are saved
+        self.plot_tracked_stats_every = 1000  # frequency at which results are plotted
         self.tracked_results = {}
         self.tracked_statistics = ['request_blocking_ratio', 'average_link_usage', 'average_node_usage']
         for obs in self.tracked_statistics:
@@ -126,7 +126,7 @@ class Environment:
         else:
             self.output_folder = 'data'
 
-        self.plot_formats = ['pdf', 'svg'] # you can configure this to other formats such as PNG, SVG
+        self.plot_formats = ['pdf', 'svg']  # you can configure this to other formats such as PNG, SVG
 
     def compute_simulation_stats(self):
         # run here the code to summarize statistics from this specific run
@@ -142,7 +142,7 @@ class Environment:
         })
 
     def reset(self, seed=None, id_simulation=None):
-        self.events = [] # event queue
+        self.events = []  # event queue
         self._processed_arrivals = 0
         self._rejected_services = 0
         self.current_time = 0.0
@@ -186,7 +186,7 @@ class Environment:
         Returns the next arrival to be scheduled in the simulator
         """
         if self._processed_arrivals > self.num_arrivals:
-            return None # returns None when all arrivals have been processed
+            return  # returns None when all arrivals have been processed
         at = self.current_time + self.rng.expovariate(1 / self.mean_service_inter_arrival_time)
 
         ht = self.rng.expovariate(1 / self.mean_service_holding_time)
@@ -197,7 +197,11 @@ class Environment:
 
         if self._processed_arrivals % self.track_stats_every == 0:
             self.tracked_results['request_blocking_ratio'].append(self.get_request_blocking_ratio())
-            self.tracked_results['average_link_usage'].append(np.mean([(self.topology[n1][n2]['total_units'] - self.topology[n1][n2]['available_units']) / self.topology[n1][n2]['total_units'] for n1, n2 in self.topology.edges()]))
+            self.tracked_results['average_link_usage']\
+                .append(np.mean([
+                    (self.topology[n1][n2]['total_units'] - self.topology[n1][n2]['available_units'])
+                    / self.topology[n1][n2]['total_units'] for n1, n2 in self.topology.edges()
+                ]))
             self.tracked_results['average_node_usage'].append(np.mean([(self.topology.nodes[node]['total_units'] -
                                                                         self.topology.nodes[node]['available_units']) /
                                                                        self.topology.nodes[node]['total_units'] for node
@@ -212,8 +216,8 @@ class Environment:
     def set_load(self, load=None, mean_service_holding_time=None):
         if load is not None:
             self.load = load
-        if mean_service_holding_time is not None:
-            self.mean_service_holding_time = mean_service_holding_time  # service holding time in seconds (10800 sec = 3 h)
+        if mean_service_holding_time is not None:  # service holding time in seconds (10800 sec = 3 h)
+            self.mean_service_holding_time = mean_service_holding_time
         self.mean_service_inter_arrival_time = 1 / float(self.load / float(self.mean_service_holding_time))
 
     def add_event(self, event):
@@ -223,7 +227,7 @@ class Environment:
         :param event:
         :return: None
         """
-        #self.debug("time={}; event={}".format(event.time, event.call))
+        # self.debug("time={}; event={}".format(event.time, event.call))
         heapq.heappush(self.events, (event.time, event))
 
     def provision_service(self, service):
@@ -313,7 +317,7 @@ def run_simulation(env):
     logger.info(f'Running simulation for load {env.load} and policy {env.policy.name}')
 
     for seed in range(env.num_seeds):
-        env.reset(seed=env.seed + seed, id_simulation=seed) # adds to the general seed
+        env.reset(seed=env.seed + seed, id_simulation=seed)  # adds to the general seed
         logger.info(f'Running simulation {seed} for policy {env.policy.name} and load {env.load}')
         while len(env.events) > 0:
             event_tuple = heapq.heappop(env.events)
@@ -339,10 +343,10 @@ class Service:
         self.source_id = src_id
         self.destination = None
         self.destination_id = None
-        self.network_units = network_units # number of network units required
-        self.computing_units = computing_units # number of CPUs required at the DC
-        self.route = None # route to be followed
-        self.provisioned = False # whether the service was provisioned or not
+        self.network_units = network_units  # number of network units required
+        self.computing_units = computing_units  # number of CPUs required at the DC
+        self.route = None  # route to be followed
+        self.provisioned = False  # whether the service was provisioned or not
 
 
 class Event:
