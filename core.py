@@ -6,7 +6,7 @@ import numpy as np
 
 import events
 import plots
-import policies
+import routing_policies
 
 
 class Environment:
@@ -15,12 +15,12 @@ class Environment:
                  output_folder=None):
 
         if args is not None and hasattr(args, 'mean_service_holding_time'):
-            self.mean_service_holding_time = args.mean_service_holding_time
+            self.mean_service_holding_time: float = args.mean_service_holding_time
         else:
-            self.mean_service_holding_time = 86400.0  # service holding time in seconds (54000 sec = 15 h)
+            self.mean_service_holding_time: float = 86400.0  # service holding time in seconds (54000 sec = 15 h)
 
-        self.load = 0.0
-        self.mean_service_inter_arrival_time = 0.0
+        self.load: float = 0.0
+        self.mean_service_inter_arrival_time: float = 0.0
         if args is not None and hasattr(args, 'load') and load is None:
             self.set_load(load=args.load)
         elif load is not None:  # load through parameter has precedence over argument
@@ -29,110 +29,98 @@ class Environment:
             self.set_load(load=50)
 
         # num_seeds defines the number of seeds (simulations) to be run for each configuration
+        self.num_seeds:int = 25
         if args is not None and hasattr(args, "num_seeds"):
             self.num_seeds = args.num_seeds
-        else:
-            self.num_seeds = 25
 
         # defines the number of DCs to be placed in the topology
+        self.num_dcs: int = 2
         if args is not None and hasattr(args, "num_dcs"):
             self.num_dcs = args.num_dcs
-        else:
-            self.num_dcs = 2
 
         # defines the number of DCs to be placed in the topology
+        self.dc_placement: str = 'degree'
         if args is not None and hasattr(args, "dc_placement"):
             self.dc_placement = args.dc_placement
-        else:
-            self.dc_placement = 'degree'
 
+        self.plot_simulation_progress: bool = False
         if args is not None and hasattr(args, "plot_simulation_progress"):
             self.plot_simulation_progress = args.plot_simulation_progress
-        else:
-            self.plot_simulation_progress = False
 
+        self.num_arrivals: int = 10000
         if args is not None and hasattr(args, "num_arrivals"):
             self.num_arrivals = args.num_arrivals
-        else:
-            self.num_arrivals = 10000
 
+        self.k_paths: int = 5
         if args is not None and hasattr(args, "k_paths"):
             self.k_paths = args.k_paths
-        else:
-            self.k_paths = 5
 
+        self.threads: int = 4
         if args is not None and hasattr(args, 'threads'):
             self.threads = args.threads
-        else:
-            self.threads = 6
 
+        self.topology_file: str = "nobel-us.xml"  #"nobel-us.xml" #"test-topo.xml"
+        self.topology_name: str = 'nobel-us'
+        # self.topology_file = "simple"  # "nobel-us.xml" #"test-topo.xml"
+        # self.topology_name = 'simple'
         if args is not None and hasattr(args, 'topology_file'):
             self.topology_file = args.topology_file
-            self.topology_name = args.topology_file.split('.')[0]
-        else:
-            self.topology_file = "nobel-us.xml"  #"nobel-us.xml" #"test-topo.xml"
-            self.topology_name = 'nobel-us'
-            # self.topology_file = "simple"  # "nobel-us.xml" #"test-topo.xml"
-            # self.topology_name = 'simple'
+            self.topology_name = args.topology_file.split('.')[0]    
 
+        self.resource_units_per_link: int = 80
         if args is not None and hasattr(args, "resource_units_per_link"):
             self.resource_units_per_link = args.resource_units_per_link
-        else:
-            self.resource_units_per_link = 80
 
+        self.policy: routing_policies.RoutingPolicy = routing_policies.ClosestAvailableDC()  # closest DC by default
+        self.policy.env = self
         if policy is not None:
             self.policy = policy  # parameter has precedence over argument
             self.policy.env = self
-        else:
-            self.policy = policies.ClosestAvailableDC()  # closest DC by default
-            self.policy.env = self
 
+        self.topology: Graph = None
         if topology is not None:
             self.topology = topology
 
+        self.seed: float = 42
+        self.rng: random.Random = random.Random(42)
         if seed is not None:
             self.seed = seed
             self.rng = random.Random(seed)
-        else:
-            self.seed = 42
-            self.rng = random.Random(42)
 
+        self.results: list = []  # initiates with an empty local results vector
         if results is not None:
             self.results = results
-        else:
-            self.results = []  # initiates with an empty local results vector
 
+        self.id_simulation: int = 0
         if id_simulation is not None:
             self.id_simulation = id_simulation
-        else:
-            self.id_simulation = 0
 
-        self.track_stats_every = 100  # frequency at which results are saved
-        self.plot_tracked_stats_every = 1000  # frequency at which results are plotted
-        self.tracked_results = {}
-        self.tracked_statistics = ['request_blocking_ratio', 'average_link_usage', 'average_node_usage']
+        self.track_stats_every: int = 100  # frequency at which results are saved
+        self.plot_tracked_stats_every: int = 1000  # frequency at which results are plotted
+        self.tracked_results: dict = {}
+        self.tracked_statistics: list = ['request_blocking_ratio', 'average_link_usage', 'average_node_usage']
         for obs in self.tracked_statistics:
             self.tracked_results[obs] = []
 
-        self.events = []  # event queue
-        self._processed_arrivals = 0
-        self._rejected_services = 0
-        self.current_time = 0.0
+        self.events: list = []  # event queue
+        self._processed_arrivals: int = 0
+        self._rejected_services: int = 0
+        self.current_time: int = 0.0
 
+        self.output_folder: str = 'data'
         if output_folder is not None:
             self.output_folder = output_folder
         elif args is not None and hasattr(args, "output_folder"):
             self.output_folder = args.output_folder
-        else:
-            self.output_folder = 'data'
 
-        self.plot_formats = ['pdf', 'svg']  # you can configure this to other formats such as PNG, SVG
+        self.plot_formats: tuple = ('pdf', 'svg')  # you can configure this to other formats such as PNG, SVG
 
     def compute_simulation_stats(self):
         # run here the code to summarize statistics from this specific run
         if self.plot_simulation_progress:
             plots.plot_simulation_progress(self)
         # add here the code to include other statistics you may want
+
         self.results[self.policy.name][self.load].append({
             'request_blocking_ratio': self.get_request_blocking_ratio(),
             'average_link_usage': np.mean([self.topology[n1][n2]['utilization'] for n1, n2 in self.topology.edges()]),
@@ -308,7 +296,7 @@ class Environment:
         return float(self._rejected_services) / float(self._processed_arrivals)
 
 
-def run_simulation(env):
+def run_simulation(env: Environment):
     """
     Launches the simulation for one particular configuration represented by the env object.
     """

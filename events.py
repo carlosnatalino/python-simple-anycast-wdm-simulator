@@ -1,4 +1,9 @@
-def arrival(env, service):
+import typing
+if typing.TYPE_CHECKING:  # avoid circular imports
+    from core import Environment, Service
+
+
+def arrival(env: 'Environment', service: 'Service'):
     # logging.debug('Processing arrival {} for policy {} load {} seed {}'
     #               .format(service.service_id, env.policy, env.load, env.seed))
 

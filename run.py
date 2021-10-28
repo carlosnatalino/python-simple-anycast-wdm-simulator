@@ -14,7 +14,7 @@ from multiprocessing import Manager
 import core
 import graph
 import plots
-import policies
+import routing_policies
 
 import logging
 logging.basicConfig(format='%(asctime)s\t%(name)-12s\t%(threadName)s\t%(message)s', level=logging.DEBUG)
@@ -40,6 +40,9 @@ def run(uargs):
     if not os.path.isdir('./results/' + env.output_folder):
         os.makedirs('./results/' + env.output_folder)
         logger.debug(f'creating folder {env.output_folder}')
+    
+    # creating a graphical representation of the topology
+    plots.plot_topology(env, args)
 
     # copy current version of files
     with open('./results/{}/0-info.txt'.format(env.output_folder), 'wt') as file:
@@ -57,7 +60,7 @@ def run(uargs):
 
     # copy current version of files
     shutil.copytree('./', f'./results/{env.output_folder}/source-code/',
-                    ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.md', 'results', 'LICENSE', '*.ipynb'))
+                    ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '*.md', 'results', 'LICENSE', '*.ipynb', '.git', '.idea', '.gitignore'))
 
     manager = Manager()
     results = manager.dict()
@@ -68,11 +71,11 @@ def run(uargs):
     for policy in exec_policies: # runs the simulations for two policies
         for load in loads:
             if policy == 'CADC':
-                policy_instance = policies.ClosestAvailableDC()
+                policy_instance = routing_policies.ClosestAvailableDC()
             elif policy == 'FADC':
-                policy_instance = policies.FarthestAvailableDC()
+                policy_instance = routing_policies.FarthestAvailableDC()
             elif policy == 'FLB':
-                policy_instance = policies.FullLoadBalancing()
+                policy_instance = routing_policies.FullLoadBalancing()
             else:
                 raise ValueError('Policy was not configured correctly (value set to {})'.format(policy))
             env_topology = copy.deepcopy(topology) # makes a deep copy of the topology object

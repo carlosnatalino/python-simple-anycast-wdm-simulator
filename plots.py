@@ -1,7 +1,12 @@
 import time
+import typing
 import datetime
 import logging
+if typing.TYPE_CHECKING:  # avoid circular imports
+    from core import Environment
 import numpy as np
+import networkx as nx
+import graph
 # mpl.use('agg') #TODO: for use in the command-line-only (no GUI) server
 from matplotlib import rcParams
 # rcParams['font.family'] = 'sans-serif'
@@ -12,7 +17,7 @@ import matplotlib.pyplot as plt
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 
-def plot_simulation_progress(env):
+def plot_simulation_progress(env: 'Environment'):
     """
     Plots results for a particular configuration.
     """
@@ -45,7 +50,7 @@ def plot_simulation_progress(env):
     plt.close()
 
 
-def plot_final_results(env, results, start_time, save_file=True, show=False, timedelta=None):
+def plot_final_results(env: 'Environment', results: dict, start_time: datetime.datetime, save_file=True, show=False, timedelta=None):
     """
     Consolidates the statistics and plots it periodically and at the end of all simulations.
     """
@@ -111,3 +116,26 @@ def plot_final_results(env, results, start_time, save_file=True, show=False, tim
     if show:
         plt.show()
     plt.close()
+
+
+def plot_topology(env: 'Environment', args):
+
+    plt.figure()
+    plt.axis('off')
+    pos = nx.get_node_attributes(env.topology, 'pos')
+
+    nx.draw_networkx_edges(env.topology, pos)
+
+    # using scatter rather than nx.draw_networkx_nodes to be able to have a legend in the topology
+    nodes_x = [pos[x][0] for x in env.topology.graph['source_nodes']]
+    nodes_y = [pos[x][1] for x in env.topology.graph['source_nodes']]
+    plt.scatter(nodes_x, nodes_y, label='Node', color='blue', alpha=1., marker='o', linewidths=1., edgecolors='black', s=160.)
+
+    nodes_x = [pos[x][0] for x in env.topology.graph['dcs']]
+    nodes_y = [pos[x][1] for x in env.topology.graph['dcs']]
+    plt.scatter(nodes_x, nodes_y, label='DC', color='red', alpha=1., marker='s', linewidths=1., edgecolors='black', s=200.)
+
+    plt.legend(loc=1)
+    for format in env.plot_formats:
+        plt.savefig(f'./results/{env.output_folder}/topology_{env.topology_name}.{format}')
+    plt.close() # avoids too many figures opened at once
